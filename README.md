@@ -239,6 +239,36 @@ Test: Health Check (GET /health)
 ...
 ```
 
+#### Go Integration Tests
+
+A Go-based integration test suite (`http_test.go`) is also available for programmatic testing:
+
+```bash
+# Make sure the server is running in HTTP mode first
+./mcp-planka --http --http-port 8080
+
+# In another terminal, run the Go tests
+go test -v ./http_test.go
+
+# Or run specific tests
+go test -v -run TestHealth ./http_test.go
+go test -v -run TestE2E ./http_test.go
+```
+
+The Go integration tests (`http_test.go`) provide:
+- Same test coverage as the bash script
+- Better error handling and type safety
+- Easier to integrate into CI/CD pipelines
+- Programmatic test execution
+- All E2E tests (create/verify/delete workflow)
+
+**Features:**
+- Idempotent tests (can be run multiple times safely)
+- Automatic resource cleanup
+- Full E2E workflow testing (project → board → list → cards → tasks)
+- HTTP endpoint validation
+- JSON-RPC protocol testing
+
 ### Running Tests
 
 To test the Planka API connection and verify all endpoints are working:
