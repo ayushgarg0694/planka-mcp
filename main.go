@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -9,8 +10,14 @@ import (
 )
 
 func main() {
+	// Parse command-line flags
+	httpMode := flag.Bool("http", false, "Run in HTTP server mode instead of stdio")
+	httpPort := flag.Int("http-port", 8080, "HTTP server port (only used with --http)")
+	httpAddr := flag.String("http-addr", "0.0.0.0", "HTTP server bind address (only used with --http)")
+	flag.Parse()
+
 	// Check if we should run tests instead
-	if len(os.Args) > 1 && os.Args[1] == "test" {
+	if len(flag.Args()) > 0 && flag.Args()[0] == "test" {
 		RunTests()
 		return
 	}
@@ -45,9 +52,17 @@ func main() {
 	// Initialize MCP server
 	server := mcp.NewServer(client)
 
-	// Start the MCP server
-	if err := server.Start(); err != nil {
-		log.Fatalf("Failed to start MCP server: %v", err)
+	// Start the MCP server in the appropriate mode
+	if *httpMode {
+		log.Printf("Starting HTTP server on %s:%d", *httpAddr, *httpPort)
+		if err := server.StartHTTP(*httpAddr, *httpPort); err != nil {
+			log.Fatalf("Failed to start HTTP server: %v", err)
+		}
+	} else {
+		// Default: stdio mode
+		if err := server.StartStdio(); err != nil {
+			log.Fatalf("Failed to start MCP server: %v", err)
+		}
 	}
 }
 

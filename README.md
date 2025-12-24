@@ -78,7 +78,11 @@ The server requires the following environment variables:
 
 ## Usage
 
-### Running the Server Locally
+The server supports two modes of operation:
+
+### Stdio Mode (Default)
+
+The server communicates via stdio using the MCP protocol. This is the default mode and is typically used by MCP clients like Cursor.
 
 #### Using API Token
 
@@ -97,7 +101,143 @@ export PLANKA_PASSWORD="your-password"
 ./mcp-planka
 ```
 
-**Note:** The server communicates via stdio using the MCP protocol, so it's typically invoked by an MCP client (like Cursor or other LLM interfaces). When running locally for testing, it will wait for MCP protocol messages on stdin.
+### HTTP Server Mode
+
+The server can also run as an HTTP server that accepts JSON-RPC 2.0 requests over HTTP. This is useful for web clients or remote access.
+
+#### Starting the HTTP Server
+
+```bash
+export PLANKA_URL="https://planka.example.com"
+export PLANKA_USERNAME="your-username"
+export PLANKA_PASSWORD="your-password"
+
+# Start HTTP server on default port 8080
+./mcp-planka --http
+
+# Start HTTP server on custom port
+./mcp-planka --http --http-port 3000
+
+# Start HTTP server on specific address and port
+./mcp-planka --http --http-addr 127.0.0.1 --http-port 8080
+```
+
+#### Command-Line Flags
+
+- `--http` - Enable HTTP server mode (default: false, uses stdio)
+- `--http-port` - HTTP server port (default: 8080)
+- `--http-addr` - HTTP server bind address (default: "0.0.0.0")
+
+#### HTTP Endpoints
+
+**POST /mcp** or **POST /** - Main JSON-RPC endpoint
+- Accepts JSON-RPC 2.0 requests in the request body
+- Returns JSON-RPC 2.0 responses
+- Example request:
+  ```json
+  {
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "id": 1
+  }
+  ```
+
+**GET /health** - Health check endpoint
+- Returns server status
+- Example response:
+  ```json
+  {
+    "status": "ok",
+    "service": "planka-mcp"
+  }
+  ```
+
+#### Example HTTP Usage
+
+```bash
+# Initialize the server
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "initialize",
+    "params": {},
+    "id": 1
+  }'
+
+# List available tools
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "id": 2
+  }'
+
+# Call a tool
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "get_projects",
+      "arguments": {}
+    },
+    "id": 3
+  }'
+```
+
+#### HTTP Mode Test Script
+
+A comprehensive test script is provided to test all HTTP endpoints:
+
+```bash
+# Make sure the server is running in HTTP mode first
+./mcp-planka --http --http-port 8080
+
+# In another terminal, run the test script
+./test_http.sh
+
+# Or specify a custom base URL
+BASE_URL=http://localhost:9000 ./test_http.sh
+```
+
+The test script (`test_http.sh`) includes:
+- Health check endpoint
+- Initialize and initialized notification
+- List all available tools
+- Get projects, project details, and boards
+- CORS preflight requests
+- Error handling (invalid methods, malformed JSON)
+
+**Prerequisites:** The script requires `jq` for JSON parsing:
+```bash
+# Ubuntu/Debian
+sudo apt-get install jq
+
+# macOS
+brew install jq
+```
+
+**Example Output:**
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    Planka MCP HTTP Mode Test Suite                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+Testing server at: http://localhost:8080
+MCP endpoint: http://localhost:8080/mcp
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Test: Health Check (GET /health)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Health check passed
+{
+  "status": "ok",
+  "service": "planka-mcp"
+}
+...
+```
 
 ### Running Tests
 
@@ -161,6 +301,8 @@ Testing Planka MCP Server
 
 ### MCP Client Configuration
 
+#### Cursor Configuration (Stdio Mode)
+
 For Cursor, add the following to your MCP configuration:
 
 #### Using API Token
@@ -197,6 +339,19 @@ For Cursor, add the following to your MCP configuration:
 ```
 
 **Note:** For security reasons, prefer using API tokens in production environments. Username/password authentication is convenient for development and testing.
+
+#### HTTP Server Configuration
+
+When running in HTTP mode, you can configure clients to connect via HTTP:
+
+```bash
+# Start the HTTP server
+./mcp-planka --http --http-port 8080
+
+# Clients can then make HTTP requests to http://localhost:8080/mcp
+```
+
+For web applications, the server includes CORS headers to allow cross-origin requests.
 
 ## Available Tools
 

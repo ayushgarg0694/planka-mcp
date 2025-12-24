@@ -101,9 +101,10 @@ type CreateProjectRequest struct {
 
 // CreateBoardRequest represents a request to create a board
 type CreateBoardRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	ProjectID   string `json:"projectId"`
+	Name        string  `json:"name"`
+	Description string  `json:"description,omitempty"`
+	ProjectID   string  `json:"projectId"`
+	Position    float64 `json:"position,omitempty"`
 }
 
 // CreateListRequest represents a request to create a list

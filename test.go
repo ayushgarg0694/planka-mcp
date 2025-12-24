@@ -124,6 +124,27 @@ func RunTests() {
 		return
 	}
 
+	// Test 7b: Create a new list
+	fmt.Printf("\n[Test 7b] Creating a new list in board '%s'...\n", boards[0].Name)
+	newList, err := client.CreateList(planka.CreateListRequest{
+		Name:    "Test List - " + fmt.Sprintf("%d", len(lists)+1),
+		BoardID: boards[0].ID,
+		Position: 65535,
+	})
+	if err != nil {
+		log.Printf("❌ Failed to create list: %v", err)
+	} else {
+		fmt.Printf("✓ List created: %s (ID: %s)\n", newList.Name, newList.ID)
+		
+		// Test 7c: Delete the newly created list
+		fmt.Printf("\n[Test 7c] Deleting the newly created list '%s'...\n", newList.Name)
+		if err := client.DeleteList(newList.ID); err != nil {
+			log.Printf("❌ Failed to delete list: %v", err)
+		} else {
+			fmt.Printf("✓ List deleted successfully: %s\n", newList.Name)
+		}
+	}
+
 	// Test 8: Get cards for a list
 	fmt.Printf("\n[Test 8] Getting cards for list '%s'...\n", lists[0].Name)
 	cards, err := client.GetCards(lists[0].ID)

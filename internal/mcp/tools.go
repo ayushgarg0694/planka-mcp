@@ -52,6 +52,20 @@ func (s *Server) getTools() []map[string]interface{} {
 			},
 		},
 		{
+			"name":        "delete_project",
+			"description": "Delete a project",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"projectId": map[string]interface{}{
+						"type":        "string",
+						"description": "The project ID",
+					},
+				},
+				"required": []string{"projectId"},
+			},
+		},
+		{
 			"name":        "get_boards",
 			"description": "Get all boards for a project",
 			"inputSchema": map[string]interface{}{
@@ -102,6 +116,20 @@ func (s *Server) getTools() []map[string]interface{} {
 			},
 		},
 		{
+			"name":        "delete_board",
+			"description": "Delete a board",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"boardId": map[string]interface{}{
+						"type":        "string",
+						"description": "The board ID",
+					},
+				},
+				"required": []string{"boardId"},
+			},
+		},
+		{
 			"name":        "get_lists",
 			"description": "Get all lists for a board",
 			"inputSchema": map[string]interface{}{
@@ -149,6 +177,20 @@ func (s *Server) getTools() []map[string]interface{} {
 					},
 				},
 				"required": []string{"name", "boardId"},
+			},
+		},
+		{
+			"name":        "delete_list",
+			"description": "Delete a list",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"listId": map[string]interface{}{
+						"type":        "string",
+						"description": "The list ID",
+					},
+				},
+				"required": []string{"listId"},
 			},
 		},
 		{
@@ -469,18 +511,24 @@ func (s *Server) callTool(name string, arguments map[string]interface{}) (string
 		return s.handleGetProject(arguments)
 	case "create_project":
 		return s.handleCreateProject(arguments)
+	case "delete_project":
+		return s.handleDeleteProject(arguments)
 	case "get_boards":
 		return s.handleGetBoards(arguments)
 	case "get_board":
 		return s.handleGetBoard(arguments)
 	case "create_board":
 		return s.handleCreateBoard(arguments)
+	case "delete_board":
+		return s.handleDeleteBoard(arguments)
 	case "get_lists":
 		return s.handleGetLists(arguments)
 	case "get_list":
 		return s.handleGetList(arguments)
 	case "create_list":
 		return s.handleCreateList(arguments)
+	case "delete_list":
+		return s.handleDeleteList(arguments)
 	case "get_cards":
 		return s.handleGetCards(arguments)
 	case "get_card":
@@ -572,6 +620,17 @@ func (s *Server) handleCreateProject(args map[string]interface{}) (string, error
 	return string(data), nil
 }
 
+func (s *Server) handleDeleteProject(args map[string]interface{}) (string, error) {
+	projectID, ok := args["projectId"].(string)
+	if !ok {
+		return "", fmt.Errorf("missing projectId")
+	}
+	if err := s.client.DeleteProject(projectID); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Project %s deleted successfully", projectID), nil
+}
+
 func (s *Server) handleGetBoards(args map[string]interface{}) (string, error) {
 	projectID, ok := args["projectId"].(string)
 	if !ok {
@@ -629,6 +688,17 @@ func (s *Server) handleCreateBoard(args map[string]interface{}) (string, error) 
 		return "", err
 	}
 	return string(data), nil
+}
+
+func (s *Server) handleDeleteBoard(args map[string]interface{}) (string, error) {
+	boardID, ok := args["boardId"].(string)
+	if !ok {
+		return "", fmt.Errorf("missing boardId")
+	}
+	if err := s.client.DeleteBoard(boardID); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Board %s deleted successfully", boardID), nil
 }
 
 func (s *Server) handleGetLists(args map[string]interface{}) (string, error) {
@@ -691,6 +761,17 @@ func (s *Server) handleCreateList(args map[string]interface{}) (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+func (s *Server) handleDeleteList(args map[string]interface{}) (string, error) {
+	listID, ok := args["listId"].(string)
+	if !ok {
+		return "", fmt.Errorf("missing listId")
+	}
+	if err := s.client.DeleteList(listID); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("List %s deleted successfully", listID), nil
 }
 
 func (s *Server) handleGetCards(args map[string]interface{}) (string, error) {

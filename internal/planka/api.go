@@ -3,6 +3,7 @@ package planka
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // APIResponse represents a generic API response with items
@@ -67,6 +68,11 @@ func (c *Client) CreateProject(req CreateProjectRequest) (*Project, error) {
 	return &resp.Item, nil
 }
 
+// DeleteProject deletes a project
+func (c *Client) DeleteProject(projectID string) error {
+	return c.delete(fmt.Sprintf("/api/projects/%s", projectID))
+}
+
 // GetBoards returns all boards for a project
 // Note: Boards are included in the project response, so we get the project and extract boards from included
 func (c *Client) GetBoards(projectID string) ([]Board, error) {
@@ -108,14 +114,34 @@ func (c *Client) GetBoard(boardID string) (*Board, error) {
 }
 
 // CreateBoard creates a new board
+// Note: Boards are created via /api/projects/{projectId}/boards endpoint and require a position
 func (c *Client) CreateBoard(req CreateBoardRequest) (*Board, error) {
 	var resp struct {
 		Item Board `json:"item"`
 	}
-	if err := c.post("/api/boards", req, &resp); err != nil {
+	// Position is required - use default if not provided
+	position := req.Position
+	if position == 0 {
+		position = 65535 // Default position
+	}
+	
+	// Create request body without projectId (it's in the URL)
+	requestBody := map[string]interface{}{
+		"name":     req.Name,
+		"position": position,
+	}
+	if req.Description != "" {
+		requestBody["description"] = req.Description
+	}
+	if err := c.post(fmt.Sprintf("/api/projects/%s/boards", req.ProjectID), requestBody, &resp); err != nil {
 		return nil, err
 	}
 	return &resp.Item, nil
+}
+
+// DeleteBoard deletes a board
+func (c *Client) DeleteBoard(boardID string) error {
+	return c.delete(fmt.Sprintf("/api/boards/%s", boardID))
 }
 
 // GetLists returns all lists for a board
@@ -180,6 +206,11 @@ func (c *Client) CreateList(req CreateListRequest) (*List, error) {
 		return nil, err
 	}
 	return &resp.Item, nil
+}
+
+// DeleteList deletes a list
+func (c *Client) DeleteList(listID string) error {
+	return c.delete(fmt.Sprintf("/api/lists/%s", listID))
 }
 
 // GetCards returns all cards for a list
@@ -290,11 +321,29 @@ func (c *Client) GetCard(cardID string) (*Card, error) {
 }
 
 // CreateCard creates a new card
+// Note: Cards are created via /api/lists/{listId}/cards endpoint
 func (c *Client) CreateCard(req CreateCardRequest) (*Card, error) {
 	var resp struct {
 		Item Card `json:"item"`
 	}
-	if err := c.post("/api/cards", req, &resp); err != nil {
+	// Position is required - use default if not provided
+	position := req.Position
+	if position == 0 {
+		position = 65535 // Default position
+	}
+	
+	// Create request body without listId (it's in the URL)
+	requestBody := map[string]interface{}{
+		"name":     req.Name,
+		"position": position,
+	}
+	if req.Description != "" {
+		requestBody["description"] = req.Description
+	}
+	if req.DueDate != nil {
+		requestBody["dueDate"] = req.DueDate.Format(time.RFC3339)
+	}
+	if err := c.post(fmt.Sprintf("/api/lists/%s/cards", req.ListID), requestBody, &resp); err != nil {
 		return nil, err
 	}
 	return &resp.Item, nil
@@ -354,11 +403,23 @@ func (c *Client) GetTasks(cardID string) ([]Task, error) {
 }
 
 // CreateTask creates a new task
+// Note: Tasks are created via /api/cards/{cardId}/tasks endpoint
 func (c *Client) CreateTask(req CreateTaskRequest) (*Task, error) {
 	var resp struct {
 		Item Task `json:"item"`
 	}
-	if err := c.post("/api/tasks", req, &resp); err != nil {
+	// Position is required - use default if not provided
+	position := req.Position
+	if position == 0 {
+		position = 65535 // Default position
+	}
+	
+	// Create request body without cardId (it's in the URL)
+	requestBody := map[string]interface{}{
+		"name":     req.Name,
+		"position": position,
+	}
+	if err := c.post(fmt.Sprintf("/api/cards/%s/tasks", req.CardID), requestBody, &resp); err != nil {
 		return nil, err
 	}
 	return &resp.Item, nil
