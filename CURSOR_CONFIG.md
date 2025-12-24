@@ -20,7 +20,7 @@ Copy the following configuration to your Cursor MCP config file:
       "env": {
         "PLANKA_URL": "https://planka.cosmicdragon.xyz",
         "PLANKA_USERNAME": "your-username",
-        "PLANKA_PASSWORD": "your-username"
+        "PLANKA_PASSWORD": "your-password"
       }
     }
   }
@@ -57,7 +57,7 @@ Copy the following configuration to your Cursor MCP config file:
    ```
 
 3. **Update the command path** in the config to match your actual path:
-   - Replace `/path/to/your/mcp-planka` with your actual path
+   - Replace the command path with your actual path to the mcp-planka binary
    - Or use an absolute path to where you've installed the binary
 
 4. **Add the configuration to Cursor**:
@@ -127,7 +127,7 @@ Once configured, you'll have access to these tools:
 
 ### Server not found
 - Make sure the path to `mcp-planka` is correct and absolute
-- Verify the binary exists and is executable: `ls -la /path/to/your/mcp-planka`
+   - Verify the binary exists and is executable: `ls -la /path/to/your/mcp-planka`
 
 ### Authentication errors
 - Check that `PLANKA_URL` is correct
