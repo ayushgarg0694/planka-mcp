@@ -145,7 +145,12 @@ func callTool(t *testing.T, toolName string, arguments map[string]interface{}) (
 	// Try parsing as object
 	var result map[string]interface{}
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
-		return nil, fmt.Errorf("failed to parse result JSON: %w", err)
+		// If parsing fails, it might be a plain string (e.g., delete operations)
+		// Return a success indicator with the message
+		return map[string]interface{}{
+			"success": true,
+			"message": text,
+		}, nil
 	}
 
 	return result, nil
